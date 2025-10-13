@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IA.cademia | Seu Personal Trainer Inteligente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      /* Cores principais */
+      --primary-color: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --secondary-color: #f8fafc;
+      --accent-color: #f59e0b;
+      /* Paleta da marca */
+      --brand-primary: #2563eb;
+      --brand-secondary: #4f46e5;
+      --brand-accent: #f59e0b;
+      --brand-gradient: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+      
+      /* Cores de texto */
+      --text-color: #1e293b;
+      --text-light: #64748b;
+      --text-lighter: #94a3b8;
+      
+      /* Cores de fundo */
+      --bg-dark: #0f172a;
+      --bg-light: #ffffff;
+      --bg-hover: #f1f5f9;
+      
+      /* Cores de borda */
+      --border-color: #e2e8f0;
+      --border-dark: #334155;
+      
+      /* Cores de chat */
+      --chat-user-bg: #f8fafc;
+      --chat-ai-bg: #ffffff;
+      --chat-border: #e2e8f0;
+      
+      /* Sombras */
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      
+      /* Gradientes */
+      --gradient-primary: linear-gradient(135deg, #2563eb, #4f46e5);
+      --gradient-accent: linear-gradient(135deg, #f59e0b, #ef4444);
+      
+      /* Animações */
+      --transition-fast: 0.2s ease;
+      --transition-normal: 0.3s ease;
+      --transition-slow: 0.5s ease;
+    }
+
+    /* Tema escuro (profissional) */
+    [data-theme="dark"] {
+      --primary-color: #60a5fa;
+      --primary-hover: #3b82f6;
+      --primary-light: rgba(59, 130, 246, 0.18);
+      --secondary-color: #0b1220;
+      --accent-color: #f59e0b;
+
+      --text-color: #e5e7eb;
+      --text-light: #9ca3af;
+      --text-lighter: #6b7280;
+
+      --bg-dark: #0b1220;
+      --bg-light: #0f172a;
+      --bg-hover: #111827;
+
+      --border-color: #1f2937;
+      --border-dark: #111827;
+
+      --chat-user-bg: #0f172a;
+      --chat-ai-bg: #0b1220;
+      --chat-border: #1f2937;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
+      --shadow-md: 0 4px 10px rgba(0,0,0,.35);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,.45);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-color);
+      background:
+        radial-gradient(1200px 600px at 80% -10%, rgba(37,99,235,0.06), transparent 60%),
+        radial-gradient(900px 500px at -10% 20%, rgba(245,158,11,0.05), transparent 60%),
+        var(--bg-light);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background-color: var(--bg-dark);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      border-right: 1px solid var(--border-dark);
+      transition: transform var(--transition-normal);
+      z-index: 200;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 24px;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo .wordmark { font-weight: 800; letter-spacing: -0.4px; background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo .brandmark { width: 28px; height: 28px; display:block; }
+
+    .logo span {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .new-chat-btn {
+      margin: 20px;
+      padding: 14px 20px;
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-md);
+    }
+
+    .new-chat-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .new-chat-btn i {
+      font-size: 18px;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .chat-history {
+      list-style: none;
+    }
+
+    .chat-history-item {
+      padding: 0;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .chat-item-content {
+      flex: 1;
+      cursor: pointer;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: var(--text-lighter);
+      font-size: 14px;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+    }
+
+    .chat-item-content:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: white;
+      border-color: var(--border-dark);
+    }
+
+    .chat-item-content.active {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .chat-history-item i {
+      font-size: 16px;
+      color: var(--accent-color);
+    }
+
+
+
+    .chat-delete-btn {
+      background: none;
+      border: none;
+      color: var(--text-lighter);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all var(--transition-fast);
+      opacity: 0;
+      margin-right: 8px;
+    }
+
+    .chat-history-item:hover .chat-delete-btn {
+      opacity: 1;
+    }
+
+    .chat-delete-btn:hover {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .sidebar-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border-dark);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.05);
+      transition: all var(--transition-fast);
+    }
+
+    .user-info:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: white;
+    }
+
+    .user-status {
+      font-size: 12px;
+      color: var(--text-lighter);
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .user-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      transition: all var(--transition-fast);
+      background-color: rgba(255, 255, 255, 0.05);
+      color: white;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-action-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .user-action-btn i {
+      font-size: 14px;
+    }
+
+    .login-btn {
+      background: var(--gradient-primary);
+    }
+
+    .login-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .profile-btn {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .logout-btn {
+      background: var(--accent-color);
+    }
+
+    .logout-btn:hover {
+      background: #e67e22;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: var(--bg-light);
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 0;
+      scroll-behavior: smooth;
+    }
+
+    .welcome-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 0 20px;
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .welcome-title {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+      letter-spacing: -0.5px;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.02);
+    }
+
+    .welcome-subtitle {
+      font-size: 20px;
+      color: var(--text-light);
+      max-width: 600px;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .suggestions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      width: 100%;
+    }
+
+    .suggestion-card {
+      background-color: var(--bg-light);
+      padding: 24px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .suggestion-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-color);
+    }
+
+    .suggestion-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      margin-bottom: 8px;
+      box-shadow: 0 10px 20px rgba(37,99,235,0.25);
+    }
+
+    .suggestion-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-color);
+    }
+
+    .suggestion-text {
+      font-size: 14px;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .chat-message {
+      padding: 32px;
+      display: flex;
+      gap: 20px;
+      animation: messageAppear var(--transition-normal);
+    }
+
+    @keyframes messageAppear {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chat-message.user {
+      background-color: var(--chat-user-bg);
+      border-bottom: 1px solid var(--chat-border);
+    }
+
+    .chat-message.ai {
+      background-color: var(--chat-ai-bg);
+      border-bottom: 1px solid var(--chat-border);
+    }
+
+    .message-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 20px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .message-avatar.user {
+      background: var(--gradient-primary);
+      color: white;
+    }
+
+    .message-avatar.ai {
+      background: var(--gradient-accent);
+      color: white;
+    }
+
+    .message-content {
+      flex: 1;
+      max-width: 800px;
+    }
+
+    /* Alinhar mensagens do usuário à direita */
+    .chat-message.user { flex-direction: row-reverse; }
+    .chat-message.user .message-content { text-align: right; }
+    .chat-message.user .message-text { text-align: right; }
+
+    .message-text {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-color);
+      max-width: 800px;
+    }
+
+    .message-text h1,
+    .message-text h2,
+    .message-text h3,
+    .message-text h4 {
+      color: var(--text-color);
+      font-weight: 600;
+      margin: 1.5em 0 0.8em;
+      line-height: 1.3;
+    }
+
+    .message-text h1 {
+      font-size: 1.8em;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.3em;
+    }
+
+    .message-text h2 {
+      font-size: 1.5em;
+      color: var(--primary-color);
+    }
+
+    .message-text h3 {
+      font-size: 1.3em;
+    }
+
+    .message-text h4 {
+      font-size: 1.1em;
+      color: var(--text-light);
+    }
+
+    .message-text p {
+      margin: 1em 0;
+      line-height: 1.7;
+    }
+
+    .message-text ul,
+    .message-text ol {
+      margin: 1em 0;
+      padding-left: 1.5em;
+    }
+
+    .message-text li {
+      margin: 0.5em 0;
+      line-height: 1.6;
+    }
+
+    .message-text li::marker {
+      color: var(--primary-color);
+    }
+
+    .message-text blockquote {
+      margin: 1em 0;
+      padding: 0.5em 1em;
+      border-left: 4px solid var(--primary-color);
+      background-color: var(--primary-light);
+      color: var(--text-color);
+    }
+
+    .message-text code {
+      background-color: var(--bg-hover);
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+
+    .message-text pre {
+      background-color: var(--bg-hover);
+      padding: 1em;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1em 0;
+    }
+
+    .message-text pre code {
+      background-color: transparent;
+      padding: 0;
+    }
+
+    .message-text hr {
+      margin: 2em 0;
+      border: none;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .message-text table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 1em 0;
+    }
+
+    .message-text th,
+    .message-text td {
+      border: 1px solid var(--border-color);
+      padding: 0.75em;
+      text-align: left;
+    }
+
+    .message-text th {
+      background-color: var(--bg-hover);
+      font-weight: 600;
+    }
+
+    .message-text img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin: 1em 0;
+    }
+
+    .message-text a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+
+    .message-text a:hover {
+      text-decoration: underline;
+    }
+
+    /* Estilos específicos para blocos de exercício */
+    .message-text .exercise-block {
+      background-color: var(--bg-hover);
+      border-radius: 8px;
+      padding: 1.5em;
+      margin: 1.5em 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .message-text .exercise-title {
+      color: var(--primary-color);
+      font-size: 1.3em;
+      font-weight: 600;
+      margin-bottom: 1em;
+    }
+
+    .message-text .exercise-section {
+      margin: 1em 0;
+    }
+
+    .message-text .exercise-section-title {
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 0.5em;
+    }
+
+    .message-text .exercise-list {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .message-text .exercise-list li {
+      position: relative;
+      padding-left: 1.5em;
+      margin: 0.5em 0;
+    }
+
+    .message-text .exercise-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0.5em;
+      color: var(--primary-color);
+    }
+
+    .input-container {
+      padding: 24px;
+      background-color: var(--bg-light);
+      border-top: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .input-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      display: flex;
+      gap: 12px;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 16px 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text-color);
+      background-color: var(--bg-light);
+      transition: all var(--transition-fast);
+      resize: none;
+      min-height: 56px;
+      max-height: 200px;
+    }
+
+    .message-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px var(--primary-light);
+    }
+
+    .send-button {
+      padding: 16px;
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-md);
+    }
+
+    .send-button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .send-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .send-button i {
+      font-size: 20px;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background-color: var(--primary-light);
+      border-radius: 12px;
+      width: fit-content;
+      margin-top: 8px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--primary-color);
+      border-radius: 50%;
+      animation: typingAnimation 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingAnimation {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-4px);
+      }
+    }
+
+    /* Responsividade */
+    @media (max-width: 1024px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 85vw;
+        box-shadow: 0 10px 30px rgba(0,0,0,.4);
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .new-chat-btn { margin: 12px; padding: 12px 16px; }
+
+      .chat-container {
+        padding: 12px 0;
+      }
+
+      .message-content { max-width: 100%; }
+
+      .welcome-title {
+        font-size: 28px;
+        margin-bottom: 16px;
+      }
+
+      .welcome-subtitle {
+        font-size: 16px;
+        margin-bottom: 24px;
+      }
+
+      .chat-message {
+        padding: 14px;
+        gap: 12px;
+      }
+
+      .message-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+      }
+
+      .message-text {
+        font-size: 14px;
+      }
+
+      .input-container { padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+      /* Mostrar header e botões no mobile */
+      .mobile-header { display: flex; }
+      .mobile-header-spacer { display: block; }
+      .fab-menu { display: flex; }
+      .sidebar-close { display: inline-flex; }
+    }
+
+    /* Utilitários */
+    .hidden {
+      display: none !important;
+    }
+
+    .fade-in {
+      animation: fadeIn var(--transition-normal);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Cabeçalho móvel */
+    .mobile-header {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.3))
+                  , var(--bg-light);
+      border-bottom: 1px solid var(--border-color);
+      z-index: 101;
+      align-items: center;
+      padding: 0 12px;
+      gap: 12px;
+    }
+    .mobile-header button {
+      width: 40px; height: 40px;
+      border: none; border-radius: 10px;
+      background: var(--bg-hover);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .mobile-header-spacer { display: none; height: 56px; }
+
+    /* Botão flutuante de menu no mobile */
+    .fab-menu {
+      display: none;
+      position: fixed;
+      left: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      border: none;
+      background: var(--bg-dark);
+      color: #fff;
+      box-shadow: var(--shadow-lg);
+      z-index: 110;
+      align-items: center; justify-content: center;
+    }
+
+    .sidebar-close {
+      display: none;
+      margin-left: auto;
+      width: 36px; height: 36px;
+      border: none; border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      display: none;
+    }
+
+    /* Overlay para sidebar no mobile */
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none;
+      z-index: 90;
+    }
+
+    /* Sticky input + safe-area */
+    .input-container {
+      padding: 24px;
+      background-color: var(--bg-light);
+      border-top: 1px solid var(--border-color);
+      position: sticky;
+      bottom: 0;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      backdrop-filter: saturate(180%) blur(10px);
+    }
+
+    /* Botão de tema */
+    .theme-toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-light);
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .theme-toggle-btn:hover { background: var(--bg-hover); transform: translateY(-2px); }
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-light);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--text-lighter);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-light);
+    }
+
+    /* Adiciona estilos específicos para a formatação */
+    .message-text ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 16px 0;
+    }
+    
+    .message-text li {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .message-text li:before {
+      content: "•";
+      position: absolute;
+      left: 8px;
+      color: var(--primary-color);
+    }
+    
+    .message-text strong {
+      display: block;
+      font-size: 1.2em;
+      margin: 24px 0 16px;
+      color: var(--text-color);
+    }
+    
+    .message-text strong:first-child {
+      margin-top: 0;
+    }
+    
+    .message-text br {
+      content: "";
+      display: block;
+      margin: 8px 0;
+    }
+
+    /* Modal / Form padrão */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; padding:12px; }
+    .modal-card { background: var(--bg-light); border:1px solid var(--border-color); border-radius:16px; padding:0; width:100%; max-width:520px; box-shadow: var(--shadow-lg); overflow:hidden; }
+    .modal-header { padding:16px 20px; background: var(--brand-gradient); color:#fff; display:flex; align-items:center; gap:10px; }
+    .modal-title { font-weight:800; letter-spacing:-0.3px; }
+    .modal-subtitle { color:#e5e7eb; font-size:13px; }
+    .modal-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+    .form-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    .form-label { font-size:12px; color: var(--text-light); font-weight:600; margin-bottom:6px; }
+    /* Switch de tema */
+    .switch { position: relative; display:inline-block; width: 46px; height: 26px; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; cursor:pointer; inset:0; background: var(--border-color); border-radius:999px; transition: all var(--transition-normal); }
+    .slider:before { content:""; position:absolute; height:20px; width:20px; left:3px; top:3px; background:white; border-radius:50%; transition: all var(--transition-normal); box-shadow: var(--shadow-sm); }
+    input:checked + .slider { background: var(--primary-color); }
+    input:checked + .slider:before { transform: translateX(20px); }
+    .tab-buttons { display:flex; gap:8px; margin-bottom:12px; }
+    .tab-button { flex:1; padding:12px; border:1px solid var(--border-color); border-radius:10px; background:#f8fafc; cursor:pointer; font-weight:600; }
+    .tab-button.active { background: var(--gradient-primary); color:#fff; border-color: transparent; }
+    .input-with-icon { position:relative; }
+    .input-with-icon i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color: var(--text-lighter); }
+    .text-input { padding:12px 12px 12px 36px; border:1px solid var(--border-color); border-radius:10px; width:100%; background: var(--bg-light); color: var(--text-color); }
+    .text-input:focus { outline:none; border-color: var(--primary-color); box-shadow: 0 0 0 4px var(--primary-light); }
+    .primary-btn { padding:12px; border:none; border-radius:10px; background: var(--gradient-primary); color:#fff; font-weight:600; cursor:pointer; }
+    .google-btn { padding:12px; border:1px solid var(--border-color); border-radius:10px; background:#fff; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .section-title { font-weight:700; margin-bottom:8px; }
+
+    /* Toaster */
+    #toastContainer { position: fixed; right: 16px; top: 16px; display:flex; flex-direction:column; gap:10px; z-index: 9999; }
+    .toast { padding: 12px 14px; border-radius: 10px; color: #fff; box-shadow: var(--shadow-md); animation: fadeIn var(--transition-normal); font-weight:600; }
+    .toast.success { background: #16a34a; }
+    .toast.error { background: #dc2626; }
+    .toast.info { background: #2563eb; }
+
+  /* Ficha compact UI */
+  .fx-card { border:1px solid var(--border-color); border-radius:12px; padding:12px; background: var(--bg-light); box-shadow: var(--shadow-sm); }
+  .fx-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .fx-title { font-weight:700; }
+  .fx-sub { color: var(--text-light); font-size: 13px; }
+  .fx-badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background: var(--primary-light); color: var(--primary-color); font-weight:600; }
+  .fx-actions { display:flex; gap:8px; align-items:center; }
+  .fx-list { display:flex; flex-direction:column; gap:10px; }
+  .fx-section { max-height:420px; overflow:auto; border:1px solid var(--border-color); border-radius:12px; padding:12px; background: var(--bg-light); }
+  .fx-empty { border:2px dashed var(--border-color); border-radius:12px; padding:20px; display:flex; align-items:center; justify-content:center; color: var(--text-light); background: transparent; }
+  .fx-empty .create-btn { margin-left:10px; padding:8px 12px; border:none; border-radius:10px; background: var(--gradient-primary); color:#fff; font-weight:700; cursor:pointer; }
+  .fx-footer { position: sticky; bottom: 0; background: var(--bg-light); border-top: 1px solid var(--border-color); padding: 10px; display:flex; justify-content:space-between; gap:8px; border-bottom-left-radius:16px; border-bottom-right-radius:16px; }
+  /* Modo de visualização vs edição */
+  #fichaModal[data-mode="view"] .fx-edit-only { display: none !important; }
+  #fichaModal[data-mode="edit"] .fx-view-only { display: none !important; }
+  </style>
+</head>
+<body>
+  <script>
+    // Ajuste de viewport para mobile (iOS/Android toolbars)
+    function setAppVh() {
+      const unit = Math.max(window.innerHeight, document.documentElement.clientHeight) / 100;
+      document.documentElement.style.setProperty('--app-vh', `${unit}px`);
+    }
+    setAppVh();
+    window.addEventListener('resize', setAppVh);
+    window.addEventListener('orientationchange', setAppVh);
+  </script>
+  <div class="mobile-header">
+    <button aria-label="Abrir menu" onclick="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div style="font-weight:700;">IA.cademia</div>
+  </div>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg class="brandmark" viewBox="0 0 48 48" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandMk" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2563eb"/>
+              <stop offset="100%" stop-color="#4f46e5"/>
+            </linearGradient>
+          </defs>
+          <!-- Marca: círculo com monograma IA -->
+          <circle cx="24" cy="24" r="22" fill="url(#brandMk)"/>
+          <path d="M16 30 L20 18 L24 18 L20 30 Z" fill="#fff" opacity="0.95"/>
+          <path d="M28 18 L28 30 M28 18 L34 18 M28 24 L34 24" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span class="wordmark">IA.cademia</span>
+      </div>
+      <button class="sidebar-close" aria-label="Fechar menu" onclick="closeSidebarOnMobile()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <button class="new-chat-btn" onclick="startNewChat()">
+      <i class="fas fa-plus"></i>
+      Nova Conversa
+    </button>
+    <div class="sidebar-content">
+      <ul class="chat-history" id="chatHistory">
+        <!-- Histórico de chat será preenchido dinamicamente -->
+      </ul>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-info" id="userInfo">
+        <div class="user-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-details">
+          <div class="user-name" id="userName">Convidado</div>
+          <div class="user-status" id="userStatus">Desconectado</div>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="user-action-btn login-btn" id="loginBtn" onclick="openAuthModal()">
+          <i class="fas fa-right-to-bracket"></i>
+          Entrar
+        </button>
+        <button class="user-action-btn profile-btn" id="profileBtn" onclick="openProfileModal()" style="display: none;">
+          <i class="fas fa-user-gear"></i>
+          Perfil
+        </button>
+        <button class="user-action-btn logout-btn" id="logoutBtn" onclick="logout()" style="display: none;">
+          <i class="fas fa-door-open"></i>
+          Sair
+        </button>
+      </div>
+      <div class="user-actions" id="fichaActions" style="margin-top: 10px;">
+        <button class="user-action-btn" id="fichaBtn" onclick="openFichaModal()">
+          <i class="fas fa-dumbbell"></i>
+          Ficha de Treino
+        </button>
+      </div>
+      <div class="user-actions" style="margin-top: 10px;">
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
+          <i class="fas fa-moon"></i>
+          <span id="themeToggleText">Tema escuro</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebarOnMobile()"></div>
+
+  <div class="main-content">
+    <div class="mobile-header-spacer"></div>
+    <button class="fab-menu" aria-label="Abrir menu" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="chat-container" id="chatContainer">
+      <div class="welcome-container" id="welcomeContainer">
+        <h1 class="welcome-title">Seu Personal Trainer Inteligente</h1>
+        <p class="welcome-subtitle">
+          Treine com a ajuda da inteligência artificial. Obtenha planos de treino personalizados,
+          dicas de exercícios e orientações profissionais para alcançar seus objetivos.
+        </p>
+        <div class="suggestions">
+          <div class="suggestion-card" onclick="askQuestion('Quais exercícios são bons para peito?')">
+            <div class="suggestion-icon">
+              <i class="fas fa-dumbbell"></i>
+            </div>
+            <h3 class="suggestion-title">Exercícios para Peito</h3>
+            <p class="suggestion-text">Descubra os melhores exercícios para desenvolver seu peitoral</p>
+          </div>
+          <div class="suggestion-card" onclick="askQuestion('Como fazer um treino para perda de gordura?')">
+            <div class="suggestion-icon">
+              <i class="fas fa-fire"></i>
+            </div>
+            <h3 class="suggestion-title">Perda de Gordura</h3>
+            <p class="suggestion-text">Aprenda estratégias eficientes para queimar gordura</p>
+          </div>
+          <div class="suggestion-card" onclick="askQuestion('Me passe um treino completo para iniciantes')">
+            <div class="suggestion-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <h3 class="suggestion-title">Treino para Iniciantes</h3>
+            <p class="suggestion-text">Comece sua jornada fitness com um plano adequado</p>
+          </div>
+        </div>
+      </div>
+      <div id="chatMessages">
+        <!-- Mensagens serão adicionadas aqui -->
+      </div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-wrapper">
+        <textarea
+          class="message-input"
+          id="messageInput"
+          placeholder="Digite sua pergunta sobre treino..."
+          rows="1"
+          onkeydown="handleKeyPress(event)"
+        ></textarea>
+        <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal de Autenticação -->
+  <div id="authModal" class="hidden modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <i class="fas fa-dumbbell" aria-hidden="true"></i>
+        <div>
+          <div class="modal-title">IA.cademia</div>
+          <div class="modal-subtitle">Faça login para salvar conversas e treinos</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="tab-buttons">
+          <button id="tabLogin" class="tab-button active" onclick="switchAuthTab('login')">Entrar</button>
+          <button id="tabSignup" class="tab-button" onclick="switchAuthTab('signup')">Cadastrar</button>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div class="input-with-icon">
+            <i class="fas fa-envelope"></i>
+            <input id="authEmail" type="email" class="text-input" placeholder="Email" />
+          </div>
+          <div class="input-with-icon">
+            <i class="fas fa-lock"></i>
+            <input id="authPassword" type="password" class="text-input" placeholder="Senha (mín. 6 caracteres)" />
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="btnDoLogin" class="primary-btn" style="flex:1;" onclick="emailLogin()">Entrar</button>
+            <button id="btnDoSignup" class="primary-btn" style="flex:1; display:none;" onclick="emailSignup()">Cadastrar</button>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; margin:8px 0; color:var(--text-lighter);">
+            <div style="height:1px; background:#e2e8f0; flex:1;"></div>
+            <span>ou</span>
+            <div style="height:1px; background:#e2e8f0; flex:1;"></div>
+          </div>
+          <button class="google-btn" onclick="signInWithGoogle()"><i class="fab fa-google"></i> Entrar com Google</button>
+          <button class="new-chat-btn" style="padding:12px; background:#222" onclick="closeAuthModal()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Perfil -->
+  <div id="profileModal" class="hidden modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <i class="fas fa-user-gear" aria-hidden="true"></i>
+        <div>
+          <div class="modal-title">Perfil</div>
+          <div class="modal-subtitle">Seus dados ajudam a personalizar os treinos</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-moon" style="color: var(--text-light);"></i>
+            <div class="form-label" style="margin:0;">Tema escuro</div>
+          </div>
+          <label class="switch">
+            <input id="profileThemeSwitch" type="checkbox" onchange="onProfileThemeToggle(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="form-grid">
+          <div>
+            <div class="form-label">Peso (kg)</div>
+            <input id="perfilPeso" class="text-input" placeholder="Ex.: 72" />
+          </div>
+          <div>
+            <div class="form-label">Altura (cm)</div>
+            <input id="perfilAltura" class="text-input" placeholder="Ex.: 175" />
+          </div>
+          <div class="full">
+            <div class="form-label">Meta</div>
+            <input id="perfilMeta" class="text-input" placeholder="Ex.: ganhar massa, perder gordura" />
+          </div>
+          <div class="full">
+            <div class="form-label">Restrições/Problemas</div>
+            <input id="perfilProblemas" class="text-input" placeholder="Ex.: coluna, joelho" />
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="primary-btn" style="flex:1;" onclick="saveProfile()">Salvar</button>
+          <button class="user-action-btn" style="flex:1; background:#0f172a; color:#fff;" onclick="closeProfileModal()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmar Exclusão -->
+  <div id="confirmDeleteModal" class="hidden modal-backdrop">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="section-title">Apagar conversa</div>
+      <div style="color: var(--text-light); margin-bottom: 16px;">
+        Tem certeza que deseja apagar esta conversa? Esta ação não pode ser desfeita.
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button class="user-action-btn" style="background:#f1f5f9; color:#0f172a;" onclick="closeConfirmDelete()">Cancelar</button>
+        <button class="user-action-btn" style="background:#ef4444; color:#fff;" onclick="confirmDelete()"><i class="fas fa-trash"></i> Apagar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ficha de Treino (passo a passo) -->
+  <div id="fichaModal" class="hidden modal-backdrop">
+    <div class="modal-card" style="max-width:900px;">
+      <div class="modal-header">
+        <i class="fas fa-dumbbell" aria-hidden="true"></i>
+        <div>
+          <div class="modal-title">Ficha de Treino</div>
+          <div class="modal-subtitle">Organize treinos, dias e exercícios</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="fxBreadcrumb" style="color:var(--text-light); font-size:13px;">Treinos</div>
+
+        <!-- VIEW: TREINOS -->
+        <div id="fxViewTreinos" style="margin-top:12px;">
+          <div class="fx-edit-only" style="margin-bottom:12px;">
+            <div class="form-grid">
+              <div class="full">
+                <div class="form-label">Nome do treino</div>
+                <input id="fxTreinoNome" class="text-input" placeholder="Ex.: Perda de Peso" />
+              </div>
+              <div class="full">
+                <div class="form-label">Objetivo</div>
+                <input id="fxTreinoObjetivo" class="text-input" placeholder="Ex.: perder peso, ganhar massa" />
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
+              <button class="primary-btn" onclick="addTreino()"><i class="fas fa-plus"></i> Criar treino</button>
+            </div>
+          </div>
+          <div class="fx-row" style="margin-bottom:8px;">
+            <div class="fx-title">Seus treinos</div>
+            <div class="fx-actions">
+              <button class="user-action-btn fx-view-only" onclick="setFichaMode('edit'); focusFxTreino()" style="background:#2563eb; color:#fff;"><i class="fas fa-pen"></i> Editar</button>
+              <button class="user-action-btn fx-edit-only" onclick="setFichaMode('view')" style="background:#111827; color:#fff;"><i class="fas fa-eye"></i> Visualizar</button>
+            </div>
+          </div>
+          <div id="fxTreinosList" class="fx-section"></div>
+        </div>
+
+        <!-- VIEW: DIAS DO TREINO SELECIONADO -->
+        <div id="fxViewDias" class="hidden" style="margin-top:12px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <button class="user-action-btn" onclick="backToTreinos()" style="background:#f1f5f9; color:#0f172a;"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <div id="fxTreinoHeader" style="font-weight:700;"></div>
+            <button class="user-action-btn fx-edit-only" style="margin-left:auto; background:#fee2e2; color:#991b1b;" onclick="removeTreino()"><i class="fas fa-trash"></i> Excluir treino</button>
+          </div>
+          <div class="fx-edit-only" style="margin-bottom:12px;">
+            <div class="form-grid">
+              <div class="full">
+                <div class="form-label">Nome do dia</div>
+                <input id="fxDiaNome" class="text-input" placeholder="Ex.: Cardio Intenso" />
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
+              <button class="primary-btn" onclick="addDia()"><i class="fas fa-plus"></i> Adicionar dia</button>
+            </div>
+          </div>
+          <div id="fxDiasList" class="fx-section"></div>
+        </div>
+
+        <!-- VIEW: EXERCÍCIOS DO DIA SELECIONADO -->
+        <div id="fxViewExercicios" class="hidden" style="margin-top:12px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <button class="user-action-btn" onclick="backToDias()" style="background:#f1f5f9; color:#0f172a;"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <div id="fxDiaHeader" style="font-weight:700;"></div>
+            <button class="user-action-btn fx-edit-only" style="margin-left:auto; background:#fee2e2; color:#991b1b;" onclick="removeDia()"><i class="fas fa-trash"></i> Excluir dia</button>
+          </div>
+          <div class="section-title fx-edit-only" style="margin-top:4px;">Adicionar exercício</div>
+          <div class="fx-edit-only" style="margin:8px 0;">
+            <div class="form-grid">
+              <div class="full">
+                <div class="form-label">Exercício</div>
+                <input id="fxExNome" class="text-input" placeholder="Ex.: Corrida, Agachamento" />
+              </div>
+              <div>
+                <div class="form-label">Músculo</div>
+                <input id="fxExMusculo" class="text-input" placeholder="Ex.: pernas, peito" />
+              </div>
+              <div>
+                <div class="form-label">Carga (kg)</div>
+                <input id="fxExCarga" class="text-input" placeholder="Opcional" />
+              </div>
+              <div>
+                <div class="form-label">Séries</div>
+                <input id="fxExSeries" class="text-input" placeholder="Ex.: 4" />
+              </div>
+              <div>
+                <div class="form-label">Repetições</div>
+                <input id="fxExReps" class="text-input" placeholder="Ex.: 12" />
+              </div>
+              <div>
+                <div class="form-label">Descanso</div>
+                <input id="fxExDescanso" class="text-input" placeholder="Ex.: 60s" />
+              </div>
+              <div>
+                <div class="form-label">Tempo</div>
+                <input id="fxExTempo" class="text-input" placeholder="Ex.: 15 min" />
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; padding:8px 10px; border:1px solid var(--border-color); border-radius:10px; background:#f8fafc;">
+                <input type="checkbox" id="fxExSemCarga" /> Sem carga
+              </div>
+              <div class="full">
+                <div class="form-label">Observações</div>
+                <textarea class="text-input" id="fxExNotas" placeholder="Técnica, variações, etc." style="width:100%; height:70px;"></textarea>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
+              <button class="primary-btn" onclick="addExercicio()"><i class="fas fa-plus"></i> Adicionar exercício</button>
+              <button class="user-action-btn" style="background:#f1f5f9; color:#0f172a;" onclick="clearExercicioForm()"><i class="fas fa-eraser"></i> Limpar campos</button>
+            </div>
+          </div>
+          <div id="fxExList" class="fx-section"></div>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div class="fx-footer">
+        <button class="user-action-btn" style="background:#f1f5f9; color:#0f172a;" onclick="closeFichaModal()">Fechar</button>
+        <div style="display:flex; gap:8px;">
+          <button class="user-action-btn" style="background:#0f172a; color:#fff;" onclick="copyResumoEstruturado()"><i class="fas fa-copy"></i> Copiar resumo</button>
+          <button class="user-action-btn" style="background:#2563eb; color:#fff;" onclick="saveTreinos()"><i class="fas fa-save"></i> Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tema (claro/escuro)
+    function applyTheme(theme){
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.setAttribute('data-theme', 'dark');
+        const t = document.getElementById('themeToggleText'); if (t) t.textContent = 'Tema claro';
+        const i = document.querySelector('#themeToggleBtn i'); if (i) i.className = 'fas fa-sun';
+      } else {
+        root.removeAttribute('data-theme');
+        const t = document.getElementById('themeToggleText'); if (t) t.textContent = 'Tema escuro';
+        const i = document.querySelector('#themeToggleBtn i'); if (i) i.className = 'fas fa-moon';
+      }
+    }
+    function toggleTheme(){
+      const current = localStorage.getItem('theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next);
+      applyTheme(next);
+    }
+    (function initTheme(){
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const saved = localStorage.getItem('theme');
+      applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+    })();
+    function onProfileThemeToggle(checked){
+      const next = checked ? 'dark' : 'light';
+      localStorage.setItem('theme', next);
+      applyTheme(next);
+    }
+    let currentSessionId = null;
+    let isProcessing = false;
+    let currentUser = null;
+    let idToken = null;
+    let currentAuthTab = 'login';
+
+    // Função para formatar a resposta da IA
+    function formatarResposta(texto) {
+      if (!texto) return "";
+
+      // Remove regras ou notas finais da IA
+      texto = texto.replace(/REGRAS OBRIGATÓRIAS:[\s\S]*$/gi, "").trim();
+
+      // Corrige negrito triplo mal feito e converte marcadores
+      texto = texto.replace(/\*\*\*/g, "**");
+      texto = texto.replace(/^\s*•\s*/gm, "- "); // Converte bullets para Markdown
+      texto = texto.replace(/\n{2,}/g, '\n\n'); // Quebra dupla de linha
+
+      // Corrige pontuações mal posicionadas
+      texto = texto.replace(/(\S)\s*!/g, '$1!');
+      texto = texto.replace(/(\S)\s*\?/g, '$1?');
+
+      // Agrupa seções com títulos
+      texto = texto.replace(/\*\*(.*?)\*\*/g, '\n\n**$1**');
+
+      // Remove ! e pontuação solta em início de linha
+      texto = texto.replace(/^\s*[!?.]\s*$/gm, "");
+
+      // Formata blocos de exercício
+      texto = texto.replace(
+        /\*\*(.*?)\*\*\n\n(.*?)(?=\n\n\*\*|$)/gs,
+        '<div class="exercise-block"><div class="exercise-title">$1</div>$2</div>'
+      );
+
+      // Formata seções dentro dos blocos de exercício
+      texto = texto.replace(
+        /(Posicionamento|Movimento|Séries e Repetições|Alternativa mais simples):\n\n(.*?)(?=\n\n|$)/gs,
+        '<div class="exercise-section"><div class="exercise-section-title">$1:</div>$2</div>'
+      );
+
+      // Converte listas para HTML
+      texto = texto.replace(
+        /- (.*?)(?=\n- |\n\n|$)/gs,
+        '<ul class="exercise-list"><li>$1</li></ul>'
+      );
+
+      // Limpa HTML mal formado
+      texto = texto.replace(/<\/ul>\s*<ul>/g, '');
+      texto = texto.replace(/<\/div>\s*<div>/g, '');
+
+      // Converte negrito para HTML
+      texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // Adiciona quebras de linha HTML
+      texto = texto.replace(/\n\n/g, '<br><br>');
+      texto = texto.replace(/\n/g, '<br>');
+
+      return texto.trim();
+    }
+
+    // Função para ajustar altura do textarea
+    function adjustTextareaHeight(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    // Função para verificar se o input tem conteúdo
+    function checkInput() {
+      const input = document.getElementById('messageInput');
+      const sendButton = document.getElementById('sendButton');
+      sendButton.disabled = !input.value.trim();
+    }
+
+    // Função para lidar com teclas pressionadas
+    function handleKeyPress(event) {
+      const input = document.getElementById('messageInput');
+      adjustTextareaHeight(input);
+      checkInput();
+
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        if (!sendButton.disabled && !isProcessing) {
+          sendMessage();
+        }
+      }
+    }
+
+    // Função para iniciar nova conversa
+    function startNewChat() {
+      currentSessionId = null;
+      document.getElementById('welcomeContainer').classList.remove('hidden');
+      document.getElementById('chatMessages').innerHTML = '';
+      document.getElementById('messageInput').value = '';
+      document.getElementById('messageInput').style.height = 'auto';
+      checkInput();
+      closeSidebarOnMobile();
+    }
+
+    // Função para fazer uma pergunta sugerida
+    function askQuestion(question) {
+      document.getElementById('messageInput').value = question;
+      document.getElementById('welcomeContainer').classList.add('hidden');
+      sendMessage();
+    }
+
+    // Função para adicionar mensagem ao chat
+    function addMessage(content, isUser = false) {
+      const chatMessages = document.getElementById('chatMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `chat-message ${isUser ? 'user' : 'ai'}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = `message-avatar ${isUser ? 'user' : 'ai'}`;
+      avatar.innerHTML = isUser ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+      
+      const messageContent = document.createElement('div');
+      messageContent.className = 'message-content';
+      
+      const messageText = document.createElement('div');
+      messageText.className = 'message-text';
+      
+      // Aplica formatação apenas para mensagens da IA
+      messageText.innerHTML = isUser ? content : formatarResposta(content);
+      
+      messageContent.appendChild(messageText);
+      messageDiv.appendChild(avatar);
+      messageDiv.appendChild(messageContent);
+      chatMessages.appendChild(messageDiv);
+      
+      // Scroll para a última mensagem
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Função para mostrar indicador de digitação
+    function showTypingIndicator() {
+      const chatMessages = document.getElementById('chatMessages');
+      const indicator = document.createElement('div');
+      indicator.className = 'chat-message ai';
+      indicator.id = 'typingIndicator';
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar ai';
+      avatar.innerHTML = '<i class="fas fa-robot"></i>';
+      
+      const content = document.createElement('div');
+      content.className = 'message-content';
+      
+      const typing = document.createElement('div');
+      typing.className = 'typing-indicator';
+      typing.innerHTML = `
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      `;
+      
+      content.appendChild(typing);
+      indicator.appendChild(avatar);
+      indicator.appendChild(content);
+      chatMessages.appendChild(indicator);
+      
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Função para remover indicador de digitação
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typingIndicator');
+      if (indicator) {
+        indicator.remove();
+      }
+    }
+
+    // Firebase init
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-9H8jvzvqU85Xbloy2JcwLyZLWf3ce_8",
+      authDomain: "iacademia-fb922.firebaseapp.com",
+      projectId: "iacademia-fb922",
+      storageBucket: "iacademia-fb922.firebasestorage.app",
+      messagingSenderId: "541217873499",
+      appId: "1:541217873499:web:2ef53a659fddbdf191a97e",
+      measurementId: "G-7X97NERW64",
+    };
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        if (firebase.apps && firebase.apps.length) {
+          firebase.app();
+        } else {
+          firebase.initializeApp(firebaseConfig);
+        }
+        // Ajusta ícone/texto do botão de tema após render
+        applyTheme(localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+        // Sincroniza switch do perfil com tema atual
+        const sw = document.getElementById('profileThemeSwitch');
+        if (sw) { sw.checked = (localStorage.getItem('theme')||'light') === 'dark'; }
+        // Abrir modal de login via URL (?login=1 ou hash #login)
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('login') === '1' || window.location.hash === '#login') {
+          openAuthModal();
+        }
+        // Persistência local para manter sessão entre reloads
+        try {
+          await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        } catch(e) {}
+        // Se foi feito signInWithRedirect, trata o resultado aqui
+        try {
+          const redirectRes = await firebase.auth().getRedirectResult();
+          if (redirectRes && redirectRes.user) {
+            showToast('success', 'Login com Google realizado!');
+            closeAuthModal();
+          }
+        } catch (e) {
+          console.warn('Redirect result:', e);
+        }
+      } catch (e) {
+        console.error('Falha ao iniciar Firebase:', e);
+        showToast('error', 'Erro ao iniciar Firebase');
+      }
+      firebase.auth().onAuthStateChanged(async (user) => {
+        currentUser = user;
+        const nameEl = document.getElementById('userName');
+        const statusEl = document.getElementById('userStatus');
+        const loginBtn = document.getElementById('loginBtn');
+        const profileBtn = document.getElementById('profileBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        
+        if (user) {
+          nameEl.textContent = user.email || 'Usuário';
+          statusEl.textContent = 'Conectado';
+          idToken = await user.getIdToken();
+          loadSessions();
+          loadProfile();
+          
+          // Mostrar botões de perfil e sair, esconder botão de entrar
+          loginBtn.style.display = 'none';
+          profileBtn.style.display = 'flex';
+          logoutBtn.style.display = 'flex';
+          
+          showToast('success', 'Login realizado');
+        } else {
+          nameEl.textContent = 'Convidado';
+          statusEl.textContent = 'Desconectado';
+          idToken = null;
+          document.getElementById('chatHistory').innerHTML = '';
+          
+          // Mostrar botão de entrar, esconder botões de perfil e sair
+          loginBtn.style.display = 'flex';
+          profileBtn.style.display = 'none';
+          logoutBtn.style.display = 'none';
+        }
+      });
+      const input = document.getElementById('messageInput');
+      input.addEventListener('input', () => {
+        adjustTextareaHeight(input);
+        checkInput();
+      });
+    });
+
+    function openAuthModal(){ document.getElementById('authModal').classList.remove('hidden'); }
+    function closeAuthModal(){ document.getElementById('authModal').classList.add('hidden'); }
+    function switchAuthTab(tab){
+      currentAuthTab = tab;
+      document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+      document.getElementById('tabSignup').classList.toggle('active', tab==='signup');
+      document.getElementById('btnDoLogin').style.display = tab==='login'? 'block':'none';
+      document.getElementById('btnDoSignup').style.display = tab==='signup'? 'block':'none';
+    }
+    async function emailLogin(){
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      try {
+        await firebase.auth().signInWithEmailAndPassword(email, password);
+        closeAuthModal();
+        showToast('success', 'Bem-vindo!');
+      } catch (e) {
+        console.error('Login falhou:', e);
+        showToast('error', e.message || e.code || 'Erro ao entrar');
+      }
+    }
+    async function emailSignup(){
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        closeAuthModal();
+        showToast('success', 'Cadastro realizado!');
+      } catch (e) {
+        console.error('Cadastro falhou:', e);
+        showToast('error', e.message || e.code || 'Erro ao cadastrar');
+      }
+    }
+    function isAuthEnvSupported(){
+      return ['http:', 'https:', 'chrome-extension:'].includes(location.protocol) && typeof localStorage !== 'undefined';
+    }
+    async function signInWithGoogle(){
+      const provider = new firebase.auth.GoogleAuthProvider();
+      if (!isAuthEnvSupported()) {
+        showToast('info', 'Abrindo modo redirect (use http://localhost, não abra o arquivo diretamente)');
+        return firebase.auth().signInWithRedirect(provider);
+      }
+      try {
+        await firebase.auth().signInWithPopup(provider);
+        closeAuthModal();
+        showToast('success', 'Login com Google realizado!');
+      } catch (e) {
+        // Fallback automático para redirect em ambientes que bloqueiam popup
+        if (e && (e.code === 'auth/operation-not-supported-in-this-environment' || e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user')) {
+          try {
+            showToast('info', 'Ambiente sem suporte a popup. Redirecionando...');
+            return firebase.auth().signInWithRedirect(provider);
+          } catch (er) {
+            console.error('Redirect falhou:', er);
+            showToast('error', er.message || er.code || 'Erro ao redirecionar para Google');
+          }
+        } else {
+          console.error('Google login falhou:', e);
+          showToast('error', e.message || e.code || 'Erro ao entrar com Google');
+        }
+      }
+    }
+    async function logout(){
+      if (firebase.auth().currentUser) {
+        await firebase.auth().signOut();
+        showToast('info', 'Você saiu');
+      }
+    }
+
+    async function loadSessions(){
+      try {
+        const res = await fetch('http://localhost:3001/api/sessions', {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        const sessions = await res.json();
+        const ul = document.getElementById('chatHistory');
+        ul.innerHTML = '';
+        sessions.forEach(s => {
+          const li = document.createElement('li');
+          li.className = 'chat-history-item';
+          
+          // Criar container para o conteúdo da conversa
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'chat-item-content';
+          contentDiv.textContent = s.title || s.id;
+          contentDiv.onclick = async () => {
+            currentSessionId = s.id;
+            
+            // Remover classe active de todos os itens
+            document.querySelectorAll('.chat-item-content').forEach(item => {
+              item.classList.remove('active');
+            });
+            
+            // Adicionar classe active ao item clicado
+            contentDiv.classList.add('active');
+            
+            document.getElementById('chatMessages').innerHTML='';
+            const r = await fetch(`http://localhost:3001/api/sessions/${s.id}`, { headers: { 'Authorization': `Bearer ${idToken}` } });
+            if (r.ok) {
+              const data = await r.json();
+              (data.messages || []).forEach(m => addMessage(m.content, m.role === 'user'));
+            }
+            closeSidebarOnMobile();
+          };
+          
+          // Criar botão de exclusão
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'chat-delete-btn';
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+          deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            openConfirmDelete(s.id);
+          };
+          
+          li.appendChild(contentDiv);
+          li.appendChild(deleteBtn);
+          ul.appendChild(li);
+        });
+      } catch(e){ console.warn('Falha ao carregar sessões', e); }
+    }
+
+    // Confirmação de exclusão customizada
+    let pendingDeleteSessionId = null;
+    function openConfirmDelete(sessionId){
+      pendingDeleteSessionId = sessionId;
+      document.getElementById('confirmDeleteModal').classList.remove('hidden');
+    }
+    function closeConfirmDelete(){
+      pendingDeleteSessionId = null;
+      document.getElementById('confirmDeleteModal').classList.add('hidden');
+    }
+    async function confirmDelete(){
+      if (!pendingDeleteSessionId) return;
+      await deleteSession(pendingDeleteSessionId);
+      closeConfirmDelete();
+    }
+
+    async function deleteSession(sessionId) {
+      try {
+        const response = await fetch(`http://localhost:3001/api/sessions/${sessionId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        
+        if (response.ok) {
+          showToast('success', 'Conversa apagada com sucesso!');
+          // Recarregar a lista de sessões
+          loadSessions();
+          // Se a sessão apagada era a atual, limpar o chat
+          if (currentSessionId === sessionId) {
+            currentSessionId = null;
+            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('welcomeContainer').classList.remove('hidden');
+          }
+        } else {
+          showToast('error', 'Erro ao apagar conversa');
+        }
+      } catch (error) {
+        console.error('Erro ao apagar sessão:', error);
+        showToast('error', 'Erro ao apagar conversa');
+      }
+    }
+
+    async function loadProfile(){
+      try {
+        const res = await fetch('http://localhost:3001/api/profile', { headers: { 'Authorization': `Bearer ${idToken}` } });
+        if (!res.ok) return;
+        const p = await res.json();
+        if (p) {
+          if (document.getElementById('perfilPeso')) document.getElementById('perfilPeso').value = p.peso || '';
+          if (document.getElementById('perfilAltura')) document.getElementById('perfilAltura').value = p.altura || '';
+          if (document.getElementById('perfilMeta')) document.getElementById('perfilMeta').value = p.meta || '';
+          if (document.getElementById('perfilProblemas')) document.getElementById('perfilProblemas').value = p.problemas || '';
+        }
+      } catch(e){}
+    }
+    function openProfileModal(){ if (!idToken) { openAuthModal(); return; } document.getElementById('profileModal').classList.remove('hidden'); }
+    function closeProfileModal(){ document.getElementById('profileModal').classList.add('hidden'); }
+    async function saveProfile(){
+      if (!idToken) { openAuthModal(); return; }
+      const profile = {
+        peso: document.getElementById('perfilPeso').value.trim(),
+        altura: document.getElementById('perfilAltura').value.trim(),
+        meta: document.getElementById('perfilMeta').value.trim(),
+        problemas: document.getElementById('perfilProblemas').value.trim(),
+        tituloPadraoConversa: ''
+      };
+      try {
+        await fetch('http://localhost:3001/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+          body: JSON.stringify(profile)
+        });
+        showToast('success', 'Perfil salvo!');
+        closeProfileModal();
+      } catch(e){ showToast('error', 'Falha ao salvar perfil'); }
+    }
+
+    // Função para enviar mensagem
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      
+      if (!message || isProcessing) return;
+      if (!idToken) { openAuthModal(); return; }
+      
+      isProcessing = true;
+      input.value = '';
+      input.style.height = 'auto';
+      checkInput();
+      
+      // Esconder welcome container se estiver visível
+      document.getElementById('welcomeContainer').classList.add('hidden');
+      
+      // Adicionar mensagem do usuário
+      addMessage(message, true);
+      
+      // Mostrar indicador de digitação
+      showTypingIndicator();
+      
+      try {
+        const response = await fetch('http://localhost:3001/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({
+            message: message,
+            sessionId: currentSessionId
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro na comunicação com o servidor');
+        }
+
+        const data = await response.json();
+        currentSessionId = data.sessionId;
+        
+        // Remover indicador de digitação
+        removeTypingIndicator();
+        
+        // Adicionar resposta da IA
+        addMessage(data.reply);
+        loadSessions();
+      } catch (error) {
+        console.error('Erro:', error);
+        removeTypingIndicator();
+        addMessage('Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente.');
+      } finally {
+        isProcessing = false;
+      }
+    }
+
+    // Toast helper
+    function showToast(type, message){
+      const c = document.getElementById('toastContainer') || (function(){ const el=document.createElement('div'); el.id='toastContainer'; document.body.appendChild(el); return el; })();
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = message;
+      c.appendChild(t);
+      setTimeout(()=>{ t.remove(); }, 4000);
+    }
+
+    // Sidebar no mobile
+    function toggleSidebar(){
+      const sb = document.querySelector('.sidebar');
+      const ov = document.getElementById('sidebarOverlay');
+      sb.classList.toggle('active');
+      const isActive = sb.classList.contains('active');
+      ov.style.display = isActive ? 'block' : 'none';
+    }
+    function closeSidebarOnMobile(){
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        const sb = document.querySelector('.sidebar');
+        const ov = document.getElementById('sidebarOverlay');
+        sb.classList.remove('active');
+        ov.style.display = 'none';
+      }
+    }
+
+    // Ficha de Treino (localStorage)
+    function openFichaModal(){
+      document.getElementById('fichaModal').classList.remove('hidden');
+      renderFicha();
+    }
+    function closeFichaModal(){
+      document.getElementById('fichaModal').classList.add('hidden');
+    }
+    function getFicha(){
+      try { return JSON.parse(localStorage.getItem('fichaTreino')||'[]'); } catch(e){ return []; }
+    }
+
+    // =============== NOVO MODELO: TREINOS > DIAS > EXERCÍCIOS ==================
+    function getTreinos(){
+      try { return JSON.parse(localStorage.getItem('treinos')||'[]'); } catch(e){ return []; }
+    }
+    function setTreinos(arr){ localStorage.setItem('treinos', JSON.stringify(arr)); }
+    function addTreino(){
+      const nome = document.getElementById('fxTreinoNome').value.trim();
+      const objetivo = document.getElementById('fxTreinoObjetivo').value.trim();
+      if (!nome){ showToast('error','Informe o nome do treino'); return; }
+      const treinos = getTreinos();
+      treinos.push({ id: Date.now().toString(), nome, objetivo, dias: [] });
+      setTreinos(treinos);
+      document.getElementById('fxTreinoNome').value='';
+      document.getElementById('fxTreinoObjetivo').value='';
+      populateTreinoSelect();
+      renderTreinosLista();
+    }
+    function removeTreino(){
+      const sel = document.getElementById('fxTreinoSelect');
+      const id = sel.value;
+      if (!id) return;
+      const treinos = getTreinos().filter(t => t.id !== id);
+      setTreinos(treinos);
+      populateTreinoSelect();
+      populateDiaSelect();
+      renderTreinosLista();
+    }
+    function onTreinoChange(){ populateDiaSelect(); renderTreinosLista(); }
+    function addDia(){
+      const id = window.fxCurrentTreinoId || document.getElementById('fxTreinoSelect')?.value;
+      if (!id){ showToast('error','Selecione um treino'); return; }
+      const nome = document.getElementById('fxDiaNome').value.trim();
+      if (!nome){ showToast('error','Informe o nome do dia'); return; }
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === id); if (!t) return;
+      t.dias.push({ id: Date.now().toString(), nome, exercicios: [] });
+      setTreinos(treinos);
+      document.getElementById('fxDiaNome').value='';
+      populateDiaSelect();
+      renderTreinosLista();
+    }
+    function removeDia(){
+      const treinoId = window.fxCurrentTreinoId || document.getElementById('fxTreinoSelect')?.value;
+      const diaId = window.fxCurrentDiaId || document.getElementById('fxDiaSelect')?.value;
+      if (!treinoId || !diaId) return;
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === treinoId); if (!t) return;
+      t.dias = t.dias.filter(d => d.id !== diaId);
+      setTreinos(treinos);
+      populateDiaSelect();
+      renderTreinosLista();
+    }
+    function onDiaChange(){ /* noop; kept for future edit feature */ }
+
+    function clearExercicioForm(){
+      ['fxExNome','fxExMusculo','fxExCarga','fxExSeries','fxExReps','fxExDescanso','fxExTempo','fxExNotas'].forEach(id=>{
+        const el = document.getElementById(id); if (el) el.value='';
+      });
+      const sem = document.getElementById('fxExSemCarga'); if (sem) sem.checked=false;
+    }
+    function addExercicio(){
+      const treinoId = window.fxCurrentTreinoId || document.getElementById('fxTreinoSelect')?.value;
+      const diaId = window.fxCurrentDiaId || document.getElementById('fxDiaSelect')?.value;
+      if (!treinoId){ showToast('error','Selecione um treino'); return; }
+      if (!diaId){ showToast('error','Selecione um dia'); return; }
+      const nome = document.getElementById('fxExNome').value.trim();
+      if (!nome){ showToast('error','Informe o exercício'); return; }
+      const ex = {
+        id: Date.now().toString(),
+        nome,
+        musculo: document.getElementById('fxExMusculo').value.trim(),
+        carga: document.getElementById('fxExCarga').value.trim(),
+        series: document.getElementById('fxExSeries').value.trim(),
+        reps: document.getElementById('fxExReps').value.trim(),
+        descanso: document.getElementById('fxExDescanso').value.trim(),
+        tempo: document.getElementById('fxExTempo').value.trim(),
+        semCarga: document.getElementById('fxExSemCarga').checked,
+        notas: document.getElementById('fxExNotas').value.trim(),
+      };
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === treinoId); if (!t) return;
+      const d = t.dias.find(x => x.id === diaId); if (!d) return;
+      d.exercicios.push(ex);
+      setTreinos(treinos);
+      clearExercicioForm();
+      renderTreinosLista();
+    }
+    function removeExercicio(treinoId, diaId, exId){
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === treinoId); if (!t) return;
+      const d = t.dias.find(x => x.id === diaId); if (!d) return;
+      d.exercicios = d.exercicios.filter(e => e.id !== exId);
+      setTreinos(treinos);
+      renderTreinosLista();
+    }
+    function populateTreinoSelect(){
+      const sel = document.getElementById('fxTreinoSelect');
+      if (!sel) return;
+      const treinos = getTreinos();
+      sel.innerHTML = '<option value="">Selecione um treino</option>' + treinos.map(t => `<option value="${t.id}">${t.nome} ${t.objetivo? '('+t.objetivo+')':''}</option>`).join('');
+    }
+    function populateDiaSelect(){
+      const selTreino = document.getElementById('fxTreinoSelect');
+      const selDia = document.getElementById('fxDiaSelect');
+      if (!selDia) return;
+      const id = selTreino.value;
+      if (!id){ selDia.innerHTML = '<option value="">Selecione um dia</option>'; return; }
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === id);
+      const dias = t? t.dias: [];
+      selDia.innerHTML = '<option value="">Selecione um dia</option>' + dias.map(d => `<option value="${d.id}">${d.nome}</option>`).join('');
+    }
+    function renderTreinosLista(){
+      const el = document.getElementById('treinosLista');
+      const listTreinos = document.getElementById('fxTreinosList');
+      const viewTreinos = document.getElementById('fxViewTreinos');
+      const viewDias = document.getElementById('fxViewDias');
+      const viewEx = document.getElementById('fxViewExercicios');
+      const breadcrumb = document.getElementById('fxBreadcrumb');
+      if (!el && !listTreinos) return;
+      const treinos = getTreinos();
+      if (listTreinos) {
+        listTreinos.innerHTML = '';
+        if (!treinos.length){
+          listTreinos.innerHTML = '';
+          const empty = document.createElement('div');
+          empty.className = 'fx-empty';
+          empty.innerHTML = 'Nenhum treino cadastrado. ';
+          const btn = document.createElement('button');
+          btn.className = 'create-btn';
+          btn.innerHTML = '<i class="fas fa-plus"></i> Criar treino';
+          btn.onclick = () => {
+            const nome = prompt('Nome do treino:');
+            if (!nome) return;
+            const objetivo = prompt('Objetivo (opcional):') || '';
+            const treinos = getTreinos();
+            treinos.push({ id: Date.now().toString(), nome, objetivo, dias: [] });
+            setTreinos(treinos);
+            renderTreinosLista();
+          };
+          empty.appendChild(btn);
+          listTreinos.appendChild(empty);
+        }
+        treinos.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'fx-card';
+          card.style.display = 'flex';
+          card.style.justifyContent = 'space-between';
+          card.style.alignItems = 'center';
+          card.innerHTML = `<div><div class=\"fx-title\">${t.nome}</div><div class=\"fx-sub\">Objetivo: ${t.objetivo||'-'}</div></div>`;
+          const actions = document.createElement('div');
+          actions.style.display='flex'; actions.style.gap='8px';
+          const openBtn = document.createElement('button');
+          openBtn.className='user-action-btn'; openBtn.style.background='#2563eb'; openBtn.style.color='#fff';
+          openBtn.innerHTML = '<i class=\"fas fa-folder-open\"></i> Abrir';
+          openBtn.onclick = () => {
+            window.fxCurrentTreinoId = t.id;
+            if (breadcrumb) breadcrumb.textContent = `Treinos / ${t.nome}`;
+            const header = document.getElementById('fxTreinoHeader'); if (header) header.textContent = `${t.nome} ${t.objetivo? '('+t.objetivo+')':''}`;
+            if (viewTreinos) viewTreinos.classList.add('hidden');
+            if (viewEx) viewEx.classList.add('hidden');
+            if (viewDias) viewDias.classList.remove('hidden');
+            renderDiasList();
+          };
+          const delBtn = document.createElement('button');
+          delBtn.className='user-action-btn'; delBtn.style.background='#fee2e2'; delBtn.style.color='#991b1b';
+          delBtn.innerHTML = '<i class=\"fas fa-trash\"></i>';
+          delBtn.onclick = () => { window.fxCurrentTreinoId = t.id; removeTreino(); };
+          actions.appendChild(openBtn); actions.appendChild(delBtn); card.appendChild(actions);
+          listTreinos.appendChild(card);
+        });
+      }
+      // Painel antigo (resumo) permanece
+      if (!el) return;
+      if (!treinos.length){ el.innerHTML = '<div style="color:var(--text-light)">Nenhum treino cadastrado.</div>'; return; }
+      el.innerHTML = '';
+      treinos.forEach(t => {
+        const bloco = document.createElement('div');
+        bloco.style.border = '1px solid var(--border-color)';
+        bloco.style.borderRadius = '10px';
+        bloco.style.padding = '12px';
+        bloco.style.background = '#fff';
+        const header = document.createElement('div');
+        header.style.display='flex'; header.style.justifyContent='space-between'; header.style.alignItems='center';
+        header.innerHTML = `<div><div style="font-weight:700">${t.nome}</div><div style="color:var(--text-light); font-size:13px;">Objetivo: ${t.objetivo||'-'}</div></div>`;
+        const diasWrap = document.createElement('div');
+        diasWrap.style.marginTop = '10px';
+        if (!t.dias.length){ diasWrap.innerHTML = '<div style="color:var(--text-light)">Nenhum dia adicionado.</div>'; }
+        t.dias.forEach(d => {
+          const diaBloco = document.createElement('div');
+          diaBloco.style.margin = '10px 0';
+          diaBloco.style.padding = '10px';
+          diaBloco.style.background = '#f8fafc';
+          diaBloco.style.border = '1px solid var(--border-color)';
+          diaBloco.style.borderRadius = '10px';
+          const title = document.createElement('div');
+          title.style.display='flex'; title.style.justifyContent='space-between'; title.style.alignItems='center';
+          title.innerHTML = `<div style="font-weight:700">${d.nome}</div>`;
+          const exWrap = document.createElement('div');
+          exWrap.style.marginTop = '6px';
+          if (!d.exercicios.length){ exWrap.innerHTML = '<div style="color:var(--text-light)">Nenhum exercício.</div>'; }
+          d.exercicios.forEach(e => {
+            const row = document.createElement('div');
+            row.style.display='grid'; row.style.gridTemplateColumns='1fr auto'; row.style.gap='8px'; row.style.alignItems='start'; row.style.margin='6px 0';
+            const left = document.createElement('div');
+            const detalhes = [];
+            if (e.musculo) detalhes.push(e.musculo);
+            if (e.series) detalhes.push(`${e.series} séries`);
+            if (e.reps) detalhes.push(`${e.reps} reps`);
+            if (e.tempo) detalhes.push(`${e.tempo}`);
+            if (e.descanso) detalhes.push(`${e.descanso} descanso`);
+            if (e.semCarga) detalhes.push('sem carga'); else if (e.carga) detalhes.push(`${e.carga} kg`);
+            left.innerHTML = `<div style="font-weight:600">${e.nome}</div>
+              <div style="color:var(--text-light); font-size:13px;">${detalhes.join(' • ')||'-'}</div>
+              ${e.notas? `<div style=\"margin-top:4px; color:var(--text-color)\">${e.notas}</div>`: ''}`;
+            const right = document.createElement('div');
+            right.innerHTML = `<button class="user-action-btn" style="background:#fee2e2; color:#991b1b;" onclick="removeExercicio('${t.id}','${d.id}','${e.id}')"><i class=\"fas fa-trash\"></i></button>`;
+            row.appendChild(left); row.appendChild(right); exWrap.appendChild(row);
+          });
+          diaBloco.appendChild(title); diaBloco.appendChild(exWrap); diasWrap.appendChild(diaBloco);
+        });
+        bloco.appendChild(header); bloco.appendChild(diasWrap); el.appendChild(bloco);
+      });
+    }
+    function renderDiasList(){
+      const list = document.getElementById('fxDiasList');
+      if (!list) return;
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === (window.fxCurrentTreinoId||''));
+      list.innerHTML = '';
+      if (!t || !t.dias.length){ list.innerHTML = '<div class="fx-card" style="text-align:center; color:var(--text-light)">Nenhum dia adicionado.</div>'; return; }
+      t.dias.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'fx-card';
+        card.style.display='flex'; card.style.justifyContent='space-between'; card.style.alignItems='center';
+        card.innerHTML = `<div class=\"fx-title\">${d.nome}</div>`;
+        const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px';
+        const openBtn = document.createElement('button');
+        openBtn.className='user-action-btn'; openBtn.style.background='#2563eb'; openBtn.style.color='#fff';
+        openBtn.innerHTML = '<i class=\"fas fa-folder-open\"></i> Abrir';
+        openBtn.onclick = () => {
+          window.fxCurrentDiaId = d.id;
+          const breadcrumb = document.getElementById('fxBreadcrumb');
+          const treinos = getTreinos();
+          const t = treinos.find(x => x.id === window.fxCurrentTreinoId);
+          if (breadcrumb && t) breadcrumb.textContent = `Treinos / ${t.nome} / ${d.nome}`;
+          const header = document.getElementById('fxDiaHeader'); if (header) header.textContent = d.nome;
+          document.getElementById('fxViewDias').classList.add('hidden');
+          document.getElementById('fxViewExercicios').classList.remove('hidden');
+          renderExerciciosList();
+        };
+        const delBtn = document.createElement('button');
+        delBtn.className='user-action-btn'; delBtn.style.background='#fee2e2'; delBtn.style.color='#991b1b';
+        delBtn.innerHTML = '<i class=\"fas fa-trash\"></i>';
+        delBtn.onclick = () => { window.fxCurrentDiaId = d.id; removeDia(); };
+        actions.appendChild(openBtn); actions.appendChild(delBtn); card.appendChild(actions);
+        list.appendChild(card);
+      });
+    }
+    function renderExerciciosList(){
+      const list = document.getElementById('fxExList');
+      if (!list) return;
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === (window.fxCurrentTreinoId||''));
+      const d = t? t.dias.find(y => y.id === (window.fxCurrentDiaId||'')) : null;
+      list.innerHTML = '';
+      if (!d || !d.exercicios.length){ list.innerHTML = '<div class="fx-card" style="text-align:center; color:var(--text-light)">Nenhum exercício.</div>'; return; }
+      d.exercicios.forEach(e => {
+        const row = document.createElement('div');
+        row.style.display='grid'; row.style.gridTemplateColumns='1fr auto'; row.style.gap='8px'; row.style.alignItems='start'; row.style.margin='6px 0';
+        const left = document.createElement('div');
+        const detalhes = [];
+        if (e.musculo) detalhes.push(e.musculo);
+        if (e.series) detalhes.push(`${e.series} séries`);
+        if (e.reps) detalhes.push(`${e.reps} reps`);
+        if (e.tempo) detalhes.push(`${e.tempo}`);
+        if (e.descanso) detalhes.push(`${e.descanso} descanso`);
+        if (e.semCarga) detalhes.push('sem carga'); else if (e.carga) detalhes.push(`${e.carga} kg`);
+        left.innerHTML = `<div style=\"font-weight:600\">${e.nome}</div>
+          <div style=\"color:var(--text-light); font-size:13px;\">${detalhes.join(' • ')||'-'}</div>
+          ${e.notas? `<div style=\\\"margin-top:4px; color:var(--text-color)\\\">${e.notas}</div>`: ''}`;
+        const right = document.createElement('div');
+        right.innerHTML = `<button class=\"user-action-btn\" style=\"background:#fee2e2; color:#991b1b;\" onclick=\"removeExercicio('${t.id}','${d.id}','${e.id}')\"><i class=\\\"fas fa-trash\\\"></i></button>`;
+        row.appendChild(left); row.appendChild(right); list.appendChild(row);
+      });
+    }
+    function backToTreinos(){
+      delete window.fxCurrentTreinoId; delete window.fxCurrentDiaId;
+      document.getElementById('fxViewExercicios').classList.add('hidden');
+      document.getElementById('fxViewDias').classList.add('hidden');
+      document.getElementById('fxViewTreinos').classList.remove('hidden');
+      const breadcrumb = document.getElementById('fxBreadcrumb'); if (breadcrumb) breadcrumb.textContent = 'Treinos';
+    }
+    function backToDias(){
+      delete window.fxCurrentDiaId;
+      document.getElementById('fxViewExercicios').classList.add('hidden');
+      document.getElementById('fxViewDias').classList.remove('hidden');
+      const treinos = getTreinos();
+      const t = treinos.find(x => x.id === (window.fxCurrentTreinoId||''));
+      const breadcrumb = document.getElementById('fxBreadcrumb'); if (breadcrumb && t) breadcrumb.textContent = `Treinos / ${t.nome}`;
+      renderDiasList();
+    }
+    function saveTreinos(){ showToast('success','Treinos salvos no dispositivo'); closeFichaModal(); }
+    function copyResumoEstruturado(){
+      const treinos = getTreinos();
+      if (!treinos.length){ showToast('info','Nenhum treino para copiar'); return; }
+      const linhas = [];
+      treinos.forEach(t => {
+        linhas.push(`Treino: ${t.nome}` + (t.objetivo? ` (Objetivo: ${t.objetivo})`:''));
+        t.dias.forEach(d => {
+          linhas.push(`  Dia: ${d.nome}`);
+          d.exercicios.forEach(e => {
+            const detalhes = [];
+            if (e.musculo) detalhes.push(`Músculo: ${e.musculo}`);
+            if (e.series) detalhes.push(`${e.series} séries`);
+            if (e.reps) detalhes.push(`${e.reps} reps`);
+            if (e.tempo) detalhes.push(`Tempo: ${e.tempo}`);
+            if (e.descanso) detalhes.push(`Descanso: ${e.descanso}`);
+            if (e.semCarga) detalhes.push('Sem carga'); else if (e.carga) detalhes.push(`Carga: ${e.carga} kg`);
+            if (e.notas) detalhes.push(`Notas: ${e.notas}`);
+            linhas.push(`    • ${e.nome}` + (detalhes.length? ` — ${detalhes.join(' | ')}`: ''));
+          });
+        });
+        linhas.push('');
+      });
+      const texto = linhas.join('\n');
+      navigator.clipboard.writeText(texto).then(()=>showToast('success','Resumo copiado!')).catch(()=>showToast('error','Falha ao copiar'));
+    }
+
+    // Inicialização do modal ao abrir
+    function setFichaMode(mode){
+      const modal = document.getElementById('fichaModal');
+      if (!modal) return;
+      modal.setAttribute('data-mode', mode === 'edit' ? 'edit' : 'view');
+    }
+    function focusFxTreino(){ const el=document.getElementById('fxTreinoNome'); if(el) el.focus(); }
+    function openFichaModal(){
+      const modal = document.getElementById('fichaModal');
+      modal.classList.remove('hidden');
+      setFichaMode('view');
+      populateTreinoSelect();
+      populateDiaSelect();
+      renderTreinosLista();
+      // foca campo nome ao entrar em modo edição
+      setTimeout(()=>{ if (modal.getAttribute('data-mode')==='edit'){ const el=document.getElementById('fxTreinoNome'); if(el) el.focus(); } }, 50);
+    }
+    function closeFichaModal(){ document.getElementById('fichaModal').classList.add('hidden'); }
+  </script>
+
+  <!-- Toast container -->
+  <div id="toastContainer"></div>
+</body>
+</html>
+
